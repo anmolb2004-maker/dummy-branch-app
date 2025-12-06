@@ -1,61 +1,112 @@
-# Flask Microloans API + Postgres (Docker)
+Dummy Loan Service API – DevOps CI/CD Project
 
-Minimal REST API for microloans, built with Flask, SQLAlchemy, Alembic, and PostgreSQL (via Docker Compose).
+A containerized Flask-based microservice that manages loan creation and reporting.
+Fully automated CI/CD deployment to AWS EC2 using Docker + GitHub Actions.
 
-## Quick start
+Features-
 
-```bash
-# 1) Build and start services
-docker compose up -d --build
+Create, list, and analyze loans
 
-# 2) Run DB migrations
-docker compose exec api alembic upgrade head
+PostgreSQL database integration
 
-# 3) Seed dummy data (idempotent)
-docker compose exec api python scripts/seed.py
+Dockerized for development, staging & production
 
-# 4) Hit endpoints
-curl http://localhost:8000/health
-curl http://localhost:8000/api/loans
-```
+Automated deployment pipeline using GitHub Actions
 
-## Configuration
+Health check endpoint:
 
-See `.env.example` for env vars. By default:
-- `DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/microloans`
-- API listens on `localhost:8000`.
+http://<EC2-PUBLIC-IP>:8000/health
 
-## API
+API Endpoints-
 
-- GET `/health` → `{ "status": "ok" }`
-- GET `/api/loans` → list all loans
-- GET `/api/loans/:id` → get loan by id
-- POST `/api/loans` → create loan (status defaults to `pending`)
+| Method | Endpoint     | Description       |
+| ------ | ------------ | ----------------- |
+| GET    | `/health`    | Check API status  |
+| GET    | `/api/loans` | List all loans    |
+| POST   | `/api/loans` | Create a new loan |
+| GET    | `/api/stats` | Loan statistics   |
 
-Example create:
-```bash
 curl -X POST http://localhost:8000/api/loans \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "borrower_id": "usr_india_999",
-    "amount": 12000.50,
-    "currency": "INR",
-    "term_months": 6,
-    "interest_rate_apr": 24.0
-  }'
-```
+-H 'Content-Type: application/json' \
+-d '{
+  "borrower_id": "usr_india_999",
+  "amount": 12000.50,
+  "currency": "INR",
+  "term_months": 6,
+  "interest_rate_apr": 24.0
+}'
 
-- GET `/api/stats` → aggregate stats: totals, avg, grouped by status/currency.
+# Clone repository
+git clone https://github.com/anmold2004-maker/dummy-branch-app.git
+cd dummy-branch-app
 
-## Development
+# Start containers
+docker-compose -f docker-compose.dev.yml up --build
 
-- App entrypoint: `wsgi.py` (`wsgi:app`)
-- Flask app factory: `app/__init__.py`
-- Models: `app/models.py`
-- Migrations: `alembic/`
+Open in browser:
 
-## Notes
+http://localhost:8000/health
 
-- Amounts are validated server-side (0 < amount ≤ 50000).
-- No authentication for this prototype.
-- Deployment pipeline test update
+Deploy Environments-
+
+| Environment | Command                                                      |
+| ----------- | ------------------------------------------------------------ |
+| Development | `docker-compose -f docker-compose.dev.yml up`                |
+| Staging     | `docker-compose -f docker-compose.staging.yml up -d --build` |
+| Production  | `docker-compose -f docker-compose.prod.yml up -d --build`    |
+
+
+CI/CD Pipeline (GitHub Actions)
+
+| Stage         | Purpose                                             |
+| ------------- | --------------------------------------------------- |
+| Test Stage    | Run tests, stop pipeline if failure                 |
+| Build Stage   | Build docker image & tag using commit SHA           |
+| Security Scan | Scan image for vulnerabilities (future improvement) |
+| Deploy Stage  | Push app to EC2 and restart containers              |
+
+Pipeline Trigger
+on:
+  push:
+    branches: [ "main" ]
+
+Deployment Flow
+Developer push code → GitHub Actions → SSH to EC2 → Copy project → docker-compose up → App deployed
+
+System Architecture-
+
+                         +-----------------------+
+                         |       Developer       |
+                         |  (push code to main)  |
+                         +-----------+-----------+
+                                     |
+                                     v
+                         +-----------------------+
+                         |     GitHub Actions    |
+                         |  CI/CD Build & Deploy |
+                         +-----------+-----------+
+                                     |
+                         SSH / SCP   |
+                                     v
+                         +-----------------------+
+                         |         AWS EC2       |
+                         |   Docker + App image  |
+                         |  Running Flask API    |
+                         +-----------------------+
+                                     |
+                                     v
+
+Design Decisions-
+
+Docker chosen for environment consistency
+
+GitHub Actions for seamless automation
+
+AWS EC2 for affordable scalability
+
+No authentication for simplicity in prototype phase
+
+Contact
+
+Made by Anmol Bhonsle
+DevOps Intern Candidate                        
