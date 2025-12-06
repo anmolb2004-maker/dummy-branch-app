@@ -58,3 +58,4 @@ curl -X POST http://localhost:8000/api/loans \
 
 - Amounts are validated server-side (0 < amount ≤ 50000).
 - No authentication for this prototype.
+- Deployment pipeline test update
